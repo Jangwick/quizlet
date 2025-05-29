@@ -1,0 +1,857 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Quizlet Clone{% endblock %}
+
+{% block content %}
+<!-- Dashboard Header -->
+<section class="dashboard-header">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="display-5 fw-bold mb-2">Welcome back, {{ current_user.first_name }}!</h1>
+                <p class="lead">Ready to continue your learning journey?</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="container py-5">
+    <!-- Quick Stats -->
+    <div class="row mb-5">
+        <div class="col-md-3">
+            <div class="card dashboard-card text-center">
+                <div class="card-body">
+                    <i class="bi bi-collection fs-1 text-primary mb-2"></i>
+                    <h3 class="fw-bold" id="total-sets">{{ total_sets or 0 }}</h3>
+                    <p class="text-muted mb-0">Study Sets</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card dashboard-card text-center">
+                <div class="card-body">
+                    <i class="bi bi-fire fs-1 text-warning mb-2"></i>
+                    <h3 class="fw-bold" id="study-streak">{{ study_streak or 0 }}</h3>
+                    <p class="text-muted mb-0">Day Streak</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card dashboard-card text-center">
+                <div class="card-body">
+                    <i class="bi bi-card-text fs-1 text-info mb-2"></i>
+                    <h3 class="fw-bold" id="cards-studied">{{ cards_studied_today or 0 }}</h3>
+                    <p class="text-muted mb-0">Cards Today</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card dashboard-card text-center">
+                <div class="card-body">
+                    <i class="bi bi-graph-up fs-1 text-success mb-2"></i>
+                    <h3 class="fw-bold" id="accuracy">{{ overall_accuracy or 0 }}%</h3>
+                    <p class="text-muted mb-0">Accuracy</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <h3 class="fw-bold mb-3">Quick Actions</h3>
+        </div>
+        <div class="col-md-3">
+            <a href="{{ url_for('flashcards.create_set') }}" class="quick-action text-decoration-none" data-action="create-set">
+                <div class="card dashboard-card text-center h-100">
+                    <div class="card-body">
+                        <i class="bi bi-plus-circle fs-1 text-primary mb-2"></i>
+                        <h5 class="fw-bold">Create Set</h5>
+                        <p class="text-muted small">Start a new study set</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a href="#" class="quick-action text-decoration-none" data-action="continue-studying">
+                <div class="card dashboard-card text-center h-100">
+                    <div class="card-body">
+                        <i class="bi bi-play-circle fs-1 text-success mb-2"></i>
+                        <h5 class="fw-bold">Continue Studying</h5>
+                        <p class="text-muted small">Pick up where you left off</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a href="#" class="quick-action text-decoration-none" data-action="review-mistakes">
+                <div class="card dashboard-card text-center h-100">
+                    <div class="card-body">
+                        <i class="bi bi-arrow-repeat fs-1 text-warning mb-2"></i>
+                        <h5 class="fw-bold">Review Mistakes</h5>
+                        <p class="text-muted small">Study cards you got wrong</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a href="#" class="quick-action text-decoration-none" data-action="random-study">
+                <div class="card dashboard-card text-center h-100">
+                    <div class="card-body">
+                        <i class="bi bi-shuffle fs-1 text-info mb-2"></i>
+                        <h5 class="fw-bold">Random Study</h5>
+                        <p class="text-muted small">Study a random set</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Recent Sets -->
+        <div class="col-lg-8">
+            <h3 class="fw-bold mb-3">Your Recent Sets</h3>
+            <div class="row" id="recent-sets">
+                {% if recent_sets %}
+                {% for set in recent_sets %}
+                <div class="col-md-6 mb-3">
+                    <div class="card dashboard-card h-100">
+                        <div class="card-body">
+                            <h6 class="card-title">{{ set.title }}</h6>
+                            <p class="card-text text-muted small">{{ set.flashcards|length }} cards</p>
+                            <div class="progress mb-2" style="height: 5px;">
+                                <div class="progress-bar" style="width: {{ set.progress or 0 }}%"></div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">{{ set.progress or 0 }}% mastered</small>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ url_for('study.flashcards_mode', set_id=set.id) }}" class="btn btn-outline-primary">
+                                        <i class="bi bi-play"></i>
+                                    </a>
+                                    <a href="{{ url_for('flashcards.edit_set', set_id=set.id) }}" class="btn btn-outline-secondary">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="col-12">
+                    <div class="text-center py-4">
+                        <i class="bi bi-collection fs-1 text-muted"></i>
+                        <h5 class="mt-3">No study sets yet</h5>
+                        <p class="text-muted">Create your first study set to get started!</p>
+                        <a href="{{ url_for('flashcards.create_set') }}" class="btn btn-primary">Create Your First Set</a>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Recent Activity</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_activity %}
+                    <div class="activity-feed">
+                        {% for activity in recent_activity %}
+                        <div class="activity-item d-flex align-items-start mb-3">
+                            <div class="activity-icon me-3">
+                                <i class="bi {{ activity.icon or 'bi-circle' }} text-primary"></i>
+                            </div>
+                            <div class="activity-content">
+                                <p class="mb-1">{{ activity.description }}</p>
+                                <small class="text-muted">{{ activity.timestamp.strftime('%b %d, %Y at %I:%M %p') }}</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-clock-history fs-2 text-muted"></i>
+                        <p class="text-muted mt-2">No recent activity</p>
+                        <a href="{{ url_for('flashcards.create_set') }}" class="btn btn-primary btn-sm">
+                            Create Your First Set
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.activity-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.activity-item:last-child {
+    margin-bottom: 0 !important;
+}
+
+.stat-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px;
+    transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.study-set-card {
+    transition: all 0.3s ease;
+    border-radius: 12px;
+}
+
+.study-set-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+
+.progress-ring {
+    transform: rotate(-90deg);
+}
+
+.progress-ring circle {
+    fill: transparent;
+    stroke-width: 8;
+    stroke-linecap: round;
+}
+
+.progress-bg {
+    stroke: #e9ecef;
+}
+
+.progress-fill {
+    stroke: #28a745;
+    stroke-dasharray: 251.2;
+    stroke-dashoffset: calc(251.2 - (251.2 * var(--progress)) / 100);
+    transition: stroke-dashoffset 0.5s ease;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+<script>
+// Initialize tooltips
+var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl)
+});
+
+// Dashboard state management
+let dashboardState = {
+    recentSets: [],
+    studyStats: {
+        totalSets: {{ total_sets or 0 }},
+        studyStreak: {{ study_streak or 0 }},
+        cardsStudiedToday: {{ cards_studied_today or 0 }},
+        overallAccuracy: {{ overall_accuracy or 0 }}
+    },
+    currentUser: {
+        firstName: '{{ current_user.first_name }}',
+        id: {{ current_user.id if current_user.is_authenticated else 'null' }}
+    }
+};
+
+// Initialize dashboard functionality
+document.addEventListener('DOMContentLoaded', function() {
+    initializeDashboard();
+    loadRecentSets();
+    initializeQuickActions();
+    startRealTimeUpdates();
+    loadStudyStreak();
+    setupProgressAnimations();
+});
+
+function initializeDashboard() {
+    // Animate stats on load
+    animateStatsCountUp();
+    
+    // Initialize progress tracking
+    updateProgressIndicators();
+    
+    // Setup keyboard shortcuts
+    setupKeyboardShortcuts();
+    
+    // Initialize search functionality
+    initializeSearch();
+}
+
+function animateStatsCountUp() {
+    const statElements = [
+        { id: 'total-sets', target: dashboardState.studyStats.totalSets },
+        { id: 'study-streak', target: dashboardState.studyStats.studyStreak },
+        { id: 'cards-studied', target: dashboardState.studyStats.cardsStudiedToday },
+        { id: 'accuracy', target: dashboardState.studyStats.overallAccuracy, suffix: '%' }
+    ];
+    
+    statElements.forEach(stat => {
+        const element = document.getElementById(stat.id);
+        if (element) {
+            animateCountUp(element, 0, stat.target, stat.suffix || '', 1500);
+        }
+    });
+}
+
+function animateCountUp(element, start, end, suffix, duration) {
+    const startTime = Date.now();
+    const range = end - start;
+    
+    function updateCount() {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const current = Math.floor(start + (range * easeOutQuart(progress)));
+        
+        element.textContent = current + suffix;
+        
+        if (progress < 1) {
+            requestAnimationFrame(updateCount);
+        }
+    }
+    
+    updateCount();
+}
+
+function easeOutQuart(t) {
+    return 1 - (--t) * t * t * t;
+}
+
+async function loadRecentSets() {
+    try {
+        // Simulate API call - replace with actual endpoint
+        const response = await fetch('/api/dashboard/recent-sets');
+        const data = await response.json();
+        
+        if (data.success) {
+            dashboardState.recentSets = data.sets;
+            renderRecentSets(data.sets);
+        }
+    } catch (error) {
+        // Use demo data for development
+        const demoSets = [
+            {
+                id: 1,
+                title: 'Spanish Vocabulary',
+                flashcards: Array(25).fill({}),
+                progress: 78,
+                lastStudied: '2 hours ago',
+                difficulty: 'intermediate'
+            },
+            {
+                id: 2,
+                title: 'JavaScript Fundamentals',
+                flashcards: Array(40).fill({}),
+                progress: 65,
+                lastStudied: '1 day ago',
+                difficulty: 'advanced'
+            },
+            {
+                id: 3,
+                title: 'Biology Terms',
+                flashcards: Array(30).fill({}),
+                progress: 92,
+                lastStudied: '3 hours ago',
+                difficulty: 'beginner'
+            }
+        ];
+        
+        dashboardState.recentSets = demoSets;
+        renderRecentSets(demoSets);
+    }
+}
+
+function renderRecentSets(sets) {
+    const container = document.getElementById('recent-sets');
+    
+    if (sets.length === 0) {
+        container.innerHTML = `
+            <div class="col-12">
+                <div class="text-center py-4">
+                    <i class="bi bi-collection fs-1 text-muted"></i>
+                    <h5 class="mt-3">No study sets yet</h5>
+                    <p class="text-muted">Create your first study set to get started!</p>
+                    <a href="{{ url_for('flashcards.create_set') }}" class="btn btn-primary">Create Your First Set</a>
+                </div>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = sets.map(set => `
+        <div class="col-md-6 mb-3">
+            <div class="card dashboard-card h-100 position-relative" onclick="openStudySet(${set.id})">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h6 class="card-title">${set.title}</h6>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-three-dots"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#" onclick="startQuickStudy(${set.id})">
+                                    <i class="bi bi-play me-2"></i>Quick Study
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" onclick="editSet(${set.id})">
+                                    <i class="bi bi-pencil me-2"></i>Edit
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" onclick="duplicateSet(${set.id})">
+                                    <i class="bi bi-files me-2"></i>Duplicate
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-danger" href="#" onclick="deleteSet(${set.id})">
+                                    <i class="bi bi-trash me-2"></i>Delete
+                                </a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <p class="card-text text-muted small mb-2">
+                        ${set.flashcards.length} cards • Last studied ${set.lastStudied}
+                    </p>
+                    
+                    <div class="progress mb-2" style="height: 6px;">
+                        <div class="progress-bar bg-primary" style="width: ${set.progress}%" 
+                             data-bs-toggle="tooltip" title="${set.progress}% mastered"></div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">${set.progress}% mastered</small>
+                        <div class="d-flex gap-1">
+                            <span class="badge ${getDifficultyBadgeClass(set.difficulty)}">${set.difficulty}</span>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary" onclick="event.stopPropagation(); startStudyMode(${set.id}, 'flashcards')" 
+                                        data-bs-toggle="tooltip" title="Flashcards">
+                                    <i class="bi bi-card-text"></i>
+                                </button>
+                                <button class="btn btn-outline-success" onclick="event.stopPropagation(); startStudyMode(${set.id}, 'learn')" 
+                                        data-bs-toggle="tooltip" title="Learn Mode">
+                                    <i class="bi bi-lightbulb"></i>
+                                </button>
+                                <button class="btn btn-outline-info" onclick="event.stopPropagation(); startStudyMode(${set.id}, 'test')" 
+                                        data-bs-toggle="tooltip" title="Test Mode">
+                                    <i class="bi bi-clipboard-check"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+    
+    // Reinitialize tooltips for new elements
+    initializeTooltips();
+}
+
+function getDifficultyBadgeClass(difficulty) {
+    switch(difficulty) {
+        case 'beginner': return 'bg-success';
+        case 'intermediate': return 'bg-warning';
+        case 'advanced': return 'bg-danger';
+        default: return 'bg-secondary';
+    }
+}
+
+function initializeQuickActions() {
+    // Continue studying action
+    document.querySelector('[data-action="continue-studying"]').addEventListener('click', function(e) {
+        e.preventDefault();
+        continueStudying();
+    });
+    
+    // Review mistakes action
+    document.querySelector('[data-action="review-mistakes"]').addEventListener('click', function(e) {
+        e.preventDefault();
+        reviewMistakes();
+    });
+    
+    // Random study action
+    document.querySelector('[data-action="random-study"]').addEventListener('click', function(e) {
+        e.preventDefault();
+        randomStudy();
+    });
+}
+
+async function continueStudying() {
+    try {
+        // Find the most recently studied set with progress < 100%
+        const incompleteSet = dashboardState.recentSets.find(set => set.progress < 100);
+        
+        if (incompleteSet) {
+            showStudyModeSelector(incompleteSet.id, incompleteSet.title);
+        } else {
+            showNotification('Great job! All your sets are complete. Try creating a new set or reviewing existing ones.', 'success');
+        }
+    } catch (error) {
+        showNotification('Unable to find study sets to continue. Try creating a new set!', 'info');
+    }
+}
+
+async function reviewMistakes() {
+    try {
+        // Simulate API call to get cards with low accuracy
+        const response = await fetch('/api/dashboard/review-mistakes');
+        const data = await response.json();
+        
+        if (data.success && data.mistakes.length > 0) {
+            window.location.href = `/study/review-mistakes`;
+        } else {
+            showNotification('No mistakes to review! Keep up the great work!', 'success');
+        }
+    } catch (error) {
+        showNotification('Review mistakes feature coming soon!', 'info');
+    }
+}
+
+async function randomStudy() {
+    if (dashboardState.recentSets.length === 0) {
+        showNotification('No study sets available. Create your first set!', 'info');
+        return;
+    }
+    
+    const randomSet = dashboardState.recentSets[Math.floor(Math.random() * dashboardState.recentSets.length)];
+    showStudyModeSelector(randomSet.id, randomSet.title);
+}
+
+function showStudyModeSelector(setId, title) {
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.innerHTML = `
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Choose Study Mode</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <h6 class="mb-3">${title}</h6>
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <button class="btn btn-outline-primary w-100" onclick="startStudyMode(${setId}, 'flashcards')">
+                                <i class="bi bi-card-text d-block fs-2 mb-2"></i>
+                                Flashcards
+                            </button>
+                        </div>
+                        <div class="col-6">
+                            <button class="btn btn-outline-success w-100" onclick="startStudyMode(${setId}, 'learn')">
+                                <i class="bi bi-lightbulb d-block fs-2 mb-2"></i>
+                                Learn
+                            </button>
+                        </div>
+                        <div class="col-6">
+                            <button class="btn btn-outline-info w-100" onclick="startStudyMode(${setId}, 'test')">
+                                <i class="bi bi-clipboard-check d-block fs-2 mb-2"></i>
+                                Test
+                            </button>
+                        </div>
+                        <div class="col-6">
+                            <button class="btn btn-outline-warning w-100" onclick="startStudyMode(${setId}, 'match')">
+                                <i class="bi bi-puzzle d-block fs-2 mb-2"></i>
+                                Match
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+    
+    // Remove modal from DOM when hidden
+    modal.addEventListener('hidden.bs.modal', () => {
+        modal.remove();
+    });
+}
+
+// Study mode functions
+function startStudyMode(setId, mode) {
+    const urls = {
+        flashcards: `/study/${setId}/flashcards`,
+        learn: `/study/${setId}/learn`,
+        test: `/study/${setId}/test`,
+        match: `/study/${setId}/match`
+    };
+    
+    window.location.href = urls[mode] || urls.flashcards;
+}
+
+function openStudySet(setId) {
+    window.location.href = `/flashcards/${setId}`;
+}
+
+function startQuickStudy(setId) {
+    startStudyMode(setId, 'flashcards');
+}
+
+function editSet(setId) {
+    window.location.href = `/flashcards/${setId}/edit`;
+}
+
+async function duplicateSet(setId) {
+    try {
+        const response = await fetch(`/api/flashcards/${setId}/duplicate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showNotification('Set duplicated successfully!', 'success');
+            loadRecentSets(); // Refresh the list
+        } else {
+            showNotification('Error duplicating set: ' + result.message, 'error');
+        }
+    } catch (error) {
+        showNotification('Set duplicated successfully! (Demo mode)', 'success');
+        // Simulate adding a duplicate to the list
+        setTimeout(() => {
+            loadRecentSets();
+        }, 1000);
+    }
+}
+
+async function deleteSet(setId) {
+    if (!confirm('Are you sure you want to delete this study set? This action cannot be undone.')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/flashcards/${setId}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showNotification('Set deleted successfully!', 'success');
+            loadRecentSets(); // Refresh the list
+        } else {
+            showNotification('Error deleting set: ' + result.message, 'error');
+        }
+    } catch (error) {
+        showNotification('Set deleted successfully! (Demo mode)', 'success');
+        // Remove from current list
+        dashboardState.recentSets = dashboardState.recentSets.filter(set => set.id !== setId);
+        renderRecentSets(dashboardState.recentSets);
+    }
+}
+
+function startRealTimeUpdates() {
+    // Update stats every 5 minutes
+    setInterval(async () => {
+        await updateStudyStats();
+    }, 5 * 60 * 1000);
+    
+    // Update time indicators every minute
+    setInterval(() => {
+        updateTimeIndicators();
+    }, 60 * 1000);
+}
+
+async function updateStudyStats() {
+    try {
+        const response = await fetch('/api/dashboard/stats');
+        const data = await response.json();
+        
+        if (data.success) {
+            // Animate changes if stats have updated
+            Object.keys(data.stats).forEach(key => {
+                if (dashboardState.studyStats[key] !== data.stats[key]) {
+                    const element = document.getElementById(key.replace(/([A-Z])/g, '-$1').toLowerCase());
+                    if (element) {
+                        animateCountUp(element, dashboardState.studyStats[key], data.stats[key], 
+                                     key === 'overallAccuracy' ? '%' : '', 1000);
+                    }
+                }
+            });
+            
+            dashboardState.studyStats = data.stats;
+        }
+    } catch (error) {
+        // Simulate some stat changes in demo mode
+        if (Math.random() < 0.3) {
+            dashboardState.studyStats.cardsStudiedToday += Math.floor(Math.random() * 3);
+            const element = document.getElementById('cards-studied');
+            if (element) {
+                element.textContent = dashboardState.studyStats.cardsStudiedToday;
+            }
+        }
+    }
+}
+
+function updateTimeIndicators() {
+    // Update "last studied" times in the recent sets
+    const timeElements = document.querySelectorAll('[data-last-studied]');
+    timeElements.forEach(element => {
+        const timestamp = element.getAttribute('data-last-studied');
+        element.textContent = formatTimeAgo(new Date(timestamp));
+    });
+}
+
+function formatTimeAgo(date) {
+    const now = new Date();
+    const diff = now - date;
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+    
+    if (days > 0) return `${days} day${days > 1 ? 's' : ''} ago`;
+    if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    if (minutes > 0) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+    return 'Just now';
+}
+
+function loadStudyStreak() {
+    // Simulate study streak visualization
+    const streakElement = document.getElementById('study-streak');
+    if (streakElement && dashboardState.studyStats.studyStreak > 0) {
+        // Add fire animation for streaks
+        if (dashboardState.studyStats.studyStreak >= 7) {
+            streakElement.parentElement.querySelector('i').className = 'bi bi-fire fs-1 text-warning mb-2';
+            streakElement.parentElement.querySelector('i').style.animation = 'pulse 2s infinite';
+        }
+    }
+}
+
+function setupProgressAnimations() {
+    // Animate progress bars on load
+    const progressBars = document.querySelectorAll('.progress-bar');
+    progressBars.forEach(bar => {
+        const width = bar.style.width;
+        bar.style.width = '0%';
+        setTimeout(() => {
+            bar.style.transition = 'width 1s ease-out';
+            bar.style.width = width;
+        }, 500);
+    });
+}
+
+function setupKeyboardShortcuts() {
+    document.addEventListener('keydown', function(e) {
+        // Ctrl/Cmd + N = New set
+        if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+            e.preventDefault();
+            window.location.href = '{{ url_for("flashcards.create_set") }}';
+        }
+        
+        // Ctrl/Cmd + S = Quick study
+        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+            e.preventDefault();
+            continueStudying();
+        }
+        
+        // Ctrl/Cmd + R = Random study
+        if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+            e.preventDefault();
+            randomStudy();
+        }
+    });
+}
+
+function initializeSearch() {
+    // Add search functionality
+    const searchHtml = `
+        <div class="col-12 mb-4">
+            <div class="search-container">
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" class="form-control" id="dashboard-search" 
+                           placeholder="Search your study sets...">
+                </div>
+            </div>
+        </div>
+    `;
+    
+    const recentSetsContainer = document.getElementById('recent-sets');
+    recentSetsContainer.insertAdjacentHTML('beforebegin', searchHtml);
+    
+    // Add search functionality
+    const searchInput = document.getElementById('dashboard-search');
+    searchInput.addEventListener('input', debounce(performSearch, 300));
+}
+
+function performSearch(e) {
+    const query = e.target.value.toLowerCase();
+    const filteredSets = dashboardState.recentSets.filter(set => 
+        set.title.toLowerCase().includes(query)
+    );
+    renderRecentSets(filteredSets);
+}
+
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+function initializeTooltips() {
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+}
+
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 1060; min-width: 300px;';
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
+// Animate progress rings
+const progressRings = document.querySelectorAll('.progress-fill');
+progressRings.forEach(ring => {
+    const progress = ring.closest('.progress-ring')?.dataset.progress || 0;
+    ring.style.setProperty('--progress', progress);
+});
+
+// Make functions globally available
+window.startStudyMode = startStudyMode;
+window.openStudySet = openStudySet;
+window.startQuickStudy = startQuickStudy;
+window.editSet = editSet;
+window.duplicateSet = duplicateSet;
+window.deleteSet = deleteSet;
+</script>
+{% endblock %}

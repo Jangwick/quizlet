@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics - Admin Panel{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="fw-bold">
+                    <i class="bi bi-graph-up text-info"></i> Analytics Dashboard
+                </h1>
+                <a href="{{ url_for('admin.index') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to Admin
+                </a>
+            </div>
+            
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">User Growth</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="userGrowthChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Study Activity</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="studyActivityChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Platform Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <h3 class="text-primary">1,234</h3>
+                            <p class="text-muted">Total Sessions</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h3 class="text-success">98.5%</h3>
+                            <p class="text-muted">Uptime</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h3 class="text-warning">456</h3>
+                            <p class="text-muted">Avg. Daily Users</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h3 class="text-info">789</h3>
+                            <p class="text-muted">Cards Studied Today</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Sample data for charts (replace with real data from backend)
+const userGrowthData = {
+    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+    datasets: [{
+        label: 'New Users',
+        data: [12, 19, 3, 5, 2, 3],
+        borderColor: 'rgb(75, 192, 192)',
+        tension: 0.1
+    }]
+};
+
+const studyActivityData = {
+    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+    datasets: [{
+        label: 'Study Sessions',
+        data: [65, 59, 80, 81, 56, 55, 40],
+        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+        borderColor: 'rgba(54, 162, 235, 1)',
+        borderWidth: 1
+    }]
+};
+
+// Initialize charts
+new Chart(document.getElementById('userGrowthChart'), {
+    type: 'line',
+    data: userGrowthData,
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'top',
+            }
+        }
+    }
+});
+
+new Chart(document.getElementById('studyActivityChart'), {
+    type: 'bar',
+    data: studyActivityData,
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'top',
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

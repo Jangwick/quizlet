@@ -1,0 +1,603 @@
+{% extends "base.html" %}
+
+{% block title %}Test: {{ flashcard_set.title }} - Quizlet Clone{% endblock %}
+
+{% block extra_css %}
+<style>
+.test-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.question-card {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    border: none;
+    overflow: hidden;
+}
+
+.question-header {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    padding: 1.5rem;
+    border: none;
+}
+
+.test-options {
+    display: grid;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.test-option {
+    padding: 1.5rem;
+    border: 2px solid #e9ecef;
+    border-radius: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: white;
+    text-align: left;
+}
+
+.test-option:hover {
+    border-color: #0d6efd;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(13, 110, 253, 0.1);
+}
+
+.test-option.selected {
+    border-color: #0d6efd;
+    background: linear-gradient(135deg, #e7f3ff 0%, #f0f8ff 100%);
+    color: #0d6efd;
+}
+
+.test-option.correct {
+    border-color: #28a745;
+    background: linear-gradient(135deg, #d1e7dd 0%, #e8f5e9 100%);
+    color: #155724;
+}
+
+.test-option.incorrect {
+    border-color: #dc3545;
+    background: linear-gradient(135deg, #f8d7da 0%, #fde2e4 100%);
+    color: #721c24;
+}
+
+.test-progress {
+    height: 8px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #e9ecef;
+    margin-bottom: 2rem;
+}
+
+.timer-badge {
+    background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+    color: white;
+    font-weight: 600;
+}
+
+.start-screen {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+}
+
+.results-screen {
+    text-align: center;
+    padding: 3rem;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+}
+
+.score-circle {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 2rem;
+    font-size: 2rem;
+    font-weight: bold;
+    color: white;
+}
+
+.score-excellent { background: linear-gradient(135deg, #28a745, #20c997); }
+.score-good { background: linear-gradient(135deg, #17a2b8, #6f42c1); }
+.score-fair { background: linear-gradient(135deg, #ffc107, #fd7e14); }
+.score-poor { background: linear-gradient(135deg, #dc3545, #e83e8c); }
+
+.answer-review {
+    text-align: left;
+    margin-top: 2rem;
+}
+
+.review-item {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-left: 4px solid #6c757d;
+}
+
+.review-item.correct {
+    border-left-color: #28a745;
+    background: linear-gradient(135deg, #d1e7dd 0%, #e8f5e9 100%);
+}
+
+.review-item.incorrect {
+    border-left-color: #dc3545;
+    background: linear-gradient(135deg, #f8d7da 0%, #fde2e4 100%);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="text-center mb-4">
+                <h2 class="fw-bold text-primary">{{ flashcard_set.title }}</h2>
+                <p class="text-muted">Test Mode - Multiple Choice Questions</p>
+            </div>
+            
+            <!-- Progress Bar -->
+            <div class="test-progress">
+                <div class="progress-bar bg-success" role="progressbar" style="width: 0%" id="test-progress"></div>
+            </div>
+            
+            <div class="test-container">
+                <!-- Start Screen -->
+                <div id="start-screen" class="start-screen">
+                    <i class="bi bi-clipboard-check fs-1 text-success mb-3 d-block"></i>
+                    <h3 class="fw-bold mb-3">Test Your Knowledge</h3>
+                    <p class="text-muted mb-4 lead">Take a comprehensive test with multiple choice questions</p>
+                    
+                    <div class="row justify-content-center mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Number of questions:</label>
+                            <select class="form-select rounded-pill" id="question-count">
+                                <option value="5">5 questions</option>
+                                <option value="10" selected>10 questions</option>
+                                <option value="15">15 questions</option>
+                                <option value="{{ flashcard_set.flashcards|length }}">All {{ flashcard_set.flashcards|length }} questions</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-success btn-lg rounded-pill px-5 py-3" id="start-test">
+                        <i class="bi bi-play-fill me-2"></i>Start Test
+                    </button>
+                </div>
+                
+                <!-- Question Screen -->
+                <div id="question-screen" style="display: none;">
+                    <div class="question-card">
+                        <div class="question-header">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">Question <span id="current-question">1</span> of <span id="total-questions">10</span></h5>
+                                <span class="badge timer-badge fs-6 px-3 py-2 rounded-pill">
+                                    <i class="bi bi-clock me-1"></i><span id="timer">00:00</span>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="card-body p-4">
+                            <h4 id="question-text" class="mb-4"></h4>
+                            <div class="test-options" id="options-container"></div>
+                            
+                            <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+                                <button class="btn btn-outline-secondary rounded-pill px-4" id="prev-question" disabled>
+                                    <i class="bi bi-arrow-left me-2"></i>Previous
+                                </button>
+                                <button class="btn btn-success rounded-pill px-4" id="submit-answer" disabled>
+                                    <i class="bi bi-check-circle me-2"></i>Submit Answer
+                                </button>
+                                <button class="btn btn-primary rounded-pill px-4" id="next-question" style="display: none;">
+                                    Next Question<i class="bi bi-arrow-right ms-2"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Results Screen -->
+                <div id="results-screen" class="results-screen" style="display: none;">
+                    <div class="score-circle" id="score-circle">0%</div>
+                    <h3 class="fw-bold mb-3">Test Complete!</h3>
+                    <div class="row text-center mb-4">
+                        <div class="col-4">
+                            <h5 class="text-success mb-1" id="correct-count">0</h5>
+                            <small class="text-muted">Correct</small>
+                        </div>
+                        <div class="col-4">
+                            <h5 class="text-danger mb-1" id="incorrect-count">0</h5>
+                            <small class="text-muted">Incorrect</small>
+                        </div>
+                        <div class="col-4">
+                            <h5 class="text-primary mb-1" id="test-time">0:00</h5>
+                            <small class="text-muted">Time</small>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex gap-2 justify-content-center mb-4">
+                        <button class="btn btn-primary rounded-pill px-4" id="retake-test">
+                            <i class="bi bi-arrow-repeat me-2"></i>Retake Test
+                        </button>
+                        <button class="btn btn-outline-primary rounded-pill px-4" id="review-answers">
+                            <i class="bi bi-eye me-2"></i>Review Answers
+                        </button>
+                        <a href="{{ url_for('flashcards.view_set', set_id=flashcard_set.id) }}" class="btn btn-outline-secondary rounded-pill px-4">
+                            <i class="bi bi-house me-2"></i>Back to Set
+                        </a>
+                    </div>
+                    
+                    <div class="answer-review" id="answer-review" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Flashcard data
+    const flashcards = [
+        {% for card in flashcard_set.flashcards %}
+        {
+            id: {{ card.id }},
+            term: {{ card.term|tojson|safe }},
+            definition: {{ card.definition|tojson|safe }}
+        }{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ];
+
+    let testState = {
+        questions: [],
+        currentQuestionIndex: 0,
+        answers: [],
+        startTime: null,
+        questionStartTime: null,
+        isAnswered: false,
+        selectedAnswers: new Map() // Track all selected answers for review
+    };
+
+    // Initialize test
+    initializeTest();
+
+    function initializeTest() {
+        document.getElementById('start-test').addEventListener('click', startTest);
+        document.getElementById('submit-answer').addEventListener('click', submitAnswer);
+        document.getElementById('next-question').addEventListener('click', nextQuestion);
+        document.getElementById('prev-question').addEventListener('click', previousQuestion);
+        document.getElementById('retake-test').addEventListener('click', retakeTest);
+        document.getElementById('review-answers').addEventListener('click', toggleReview);
+    }
+
+    function startTest() {
+        const questionCount = parseInt(document.getElementById('question-count').value);
+        
+        // Shuffle and select questions
+        const shuffledCards = [...flashcards].sort(() => Math.random() - 0.5);
+        testState.questions = shuffledCards.slice(0, Math.min(questionCount, flashcards.length));
+        testState.currentQuestionIndex = 0;
+        testState.answers = [];
+        testState.selectedAnswers.clear();
+        testState.startTime = Date.now();
+        
+        // Show question screen
+        document.getElementById('start-screen').style.display = 'none';
+        document.getElementById('question-screen').style.display = 'block';
+        
+        // Update total questions display
+        document.getElementById('total-questions').textContent = testState.questions.length;
+        
+        // Start timer
+        startTimer();
+        
+        // Show first question
+        showQuestion();
+    }
+
+    function showQuestion() {
+        const question = testState.questions[testState.currentQuestionIndex];
+        testState.questionStartTime = Date.now();
+        testState.isAnswered = false;
+        
+        // Update question display
+        document.getElementById('current-question').textContent = testState.currentQuestionIndex + 1;
+        document.getElementById('question-text').textContent = question.term;
+        
+        // Generate answer options
+        const options = [question.definition];
+        
+        // Add 3 random wrong answers
+        const wrongAnswers = flashcards
+            .filter(card => card.id !== question.id)
+            .sort(() => Math.random() - 0.5)
+            .slice(0, 3)
+            .map(card => card.definition);
+        
+        options.push(...wrongAnswers);
+        options.sort(() => Math.random() - 0.5);
+        
+        // Display options
+        const optionsContainer = document.getElementById('options-container');
+        optionsContainer.innerHTML = options.map((option, index) => `
+            <div class="test-option" data-option="${option}" onclick="selectOption(this)">
+                <div class="d-flex align-items-center">
+                    <span class="option-letter me-3">${String.fromCharCode(65 + index)}</span>
+                    <span class="option-text">${option}</span>
+                </div>
+            </div>
+        `).join('');
+        
+        // Restore previous selection if navigating back
+        const previousSelection = testState.selectedAnswers.get(testState.currentQuestionIndex);
+        if (previousSelection) {
+            const optionElement = document.querySelector(`[data-option="${previousSelection}"]`);
+            if (optionElement) {
+                optionElement.classList.add('selected');
+                document.getElementById('submit-answer').disabled = false;
+            }
+        }
+        
+        // Update UI state
+        if (!previousSelection) {
+            document.getElementById('submit-answer').disabled = true;
+        }
+        document.getElementById('next-question').style.display = 'none';
+        document.getElementById('submit-answer').style.display = 'inline-block';
+        
+        // Update navigation buttons
+        document.getElementById('prev-question').disabled = testState.currentQuestionIndex === 0;
+        
+        // Update progress
+        updateProgress();
+    }
+
+    function selectOption(optionElement) {
+        if (testState.isAnswered) return;
+        
+        // Remove previous selections
+        document.querySelectorAll('.test-option').forEach(opt => {
+            opt.classList.remove('selected');
+        });
+        
+        // Select current option
+        optionElement.classList.add('selected');
+        document.getElementById('submit-answer').disabled = false;
+        
+        // Store selection
+        testState.selectedAnswers.set(testState.currentQuestionIndex, optionElement.dataset.option);
+    }
+
+    function submitAnswer() {
+        if (testState.isAnswered) return;
+        
+        const selectedOption = document.querySelector('.test-option.selected');
+        if (!selectedOption) return;
+        
+        const question = testState.questions[testState.currentQuestionIndex];
+        const selectedAnswer = selectedOption.dataset.option;
+        const isCorrect = selectedAnswer === question.definition;
+        const responseTime = Date.now() - testState.questionStartTime;
+        
+        // Store answer only if not already stored
+        if (!testState.answers[testState.currentQuestionIndex]) {
+            testState.answers[testState.currentQuestionIndex] = {
+                questionIndex: testState.currentQuestionIndex,
+                question: question.term,
+                correctAnswer: question.definition,
+                selectedAnswer: selectedAnswer,
+                isCorrect: isCorrect,
+                responseTime: responseTime,
+                options: Array.from(document.querySelectorAll('.test-option')).map(opt => opt.dataset.option)
+            };
+        }
+        
+        // Show visual feedback
+        document.querySelectorAll('.test-option').forEach(opt => {
+            if (opt.dataset.option === question.definition) {
+                opt.classList.add('correct');
+            } else if (opt.classList.contains('selected') && !isCorrect) {
+                opt.classList.add('incorrect');
+            }
+            // Disable all options
+            opt.style.pointerEvents = 'none';
+        });
+        
+        testState.isAnswered = true;
+        
+        // Update UI
+        document.getElementById('submit-answer').style.display = 'none';
+        
+        if (testState.currentQuestionIndex < testState.questions.length - 1) {
+            document.getElementById('next-question').style.display = 'inline-block';
+        } else {
+            // Last question - show finish button
+            document.getElementById('next-question').innerHTML = '<i class="bi bi-flag-checkered me-2"></i>Finish Test';
+            document.getElementById('next-question').style.display = 'inline-block';
+        }
+        
+        // Auto-advance after 2 seconds if not last question
+        if (testState.currentQuestionIndex < testState.questions.length - 1) {
+            setTimeout(() => {
+                if (document.getElementById('next-question').style.display !== 'none') {
+                    nextQuestion();
+                }
+            }, 2000);
+        }
+    }
+
+    function nextQuestion() {
+        if (testState.currentQuestionIndex < testState.questions.length - 1) {
+            testState.currentQuestionIndex++;
+            showQuestion();
+        } else {
+            showResults();
+        }
+    }
+
+    function previousQuestion() {
+        if (testState.currentQuestionIndex > 0) {
+            testState.currentQuestionIndex--;
+            
+            // Re-enable options for previous questions
+            document.querySelectorAll('.test-option').forEach(opt => {
+                opt.style.pointerEvents = 'auto';
+                opt.classList.remove('correct', 'incorrect');
+            });
+            
+            testState.isAnswered = false;
+            showQuestion();
+        }
+    }
+
+    function showResults() {
+        const validAnswers = testState.answers.filter(a => a !== undefined);
+        const correctAnswers = validAnswers.filter(a => a.isCorrect).length;
+        const totalAnswers = validAnswers.length;
+        const percentage = totalAnswers > 0 ? Math.round((correctAnswers / totalAnswers) * 100) : 0;
+        const totalTime = Math.floor((Date.now() - testState.startTime) / 1000);
+        
+        // Hide question screen
+        document.getElementById('question-screen').style.display = 'none';
+        
+        // Show results screen
+        document.getElementById('results-screen').style.display = 'block';
+        
+        // Update score display
+        const scoreCircle = document.getElementById('score-circle');
+        scoreCircle.textContent = percentage + '%';
+        scoreCircle.className = 'score-circle ' + getScoreClass(percentage);
+        
+        // Update stats
+        document.getElementById('correct-count').textContent = correctAnswers;
+        document.getElementById('incorrect-count').textContent = totalAnswers - correctAnswers;
+        document.getElementById('test-time').textContent = formatTime(totalTime);
+        
+        // Update progress to 100%
+        document.getElementById('test-progress').style.width = '100%';
+        
+        // Generate review content
+        generateAnswerReview();
+        
+        // Stop timer
+        if (window.testTimer) {
+            clearInterval(window.testTimer);
+        }
+    }
+
+    function generateAnswerReview() {
+        const reviewContainer = document.getElementById('answer-review');
+        const validAnswers = testState.answers.filter(a => a !== undefined);
+        
+        reviewContainer.innerHTML = '<h5 class="mb-3"><i class="bi bi-clipboard-check me-2"></i>Answer Review</h5>' + 
+            validAnswers.map((answer, index) => `
+                <div class="review-item ${answer.isCorrect ? 'correct' : 'incorrect'}">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <strong>Question ${answer.questionIndex + 1}</strong>
+                        <span class="badge ${answer.isCorrect ? 'bg-success' : 'bg-danger'}">
+                            ${answer.isCorrect ? 'Correct' : 'Incorrect'}
+                        </span>
+                    </div>
+                    <div class="mb-2">
+                        <strong>Question:</strong> ${answer.question}
+                    </div>
+                    <div class="mb-2">
+                        <strong>Your Answer:</strong> 
+                        <span class="${answer.isCorrect ? 'text-success' : 'text-danger'}">${answer.selectedAnswer}</span>
+                    </div>
+                    ${!answer.isCorrect ? `
+                        <div class="mb-2">
+                            <strong>Correct Answer:</strong> 
+                            <span class="text-success">${answer.correctAnswer}</span>
+                        </div>
+                    ` : ''}
+                    <small class="text-muted">
+                        <i class="bi bi-clock me-1"></i>Response time: ${(answer.responseTime / 1000).toFixed(1)}s
+                    </small>
+                </div>
+            `).join('');
+    }
+
+    function toggleReview() {
+        const reviewContainer = document.getElementById('answer-review');
+        const button = document.getElementById('review-answers');
+        
+        if (reviewContainer.style.display === 'none' || !reviewContainer.style.display) {
+            reviewContainer.style.display = 'block';
+            button.innerHTML = '<i class="bi bi-eye-slash me-2"></i>Hide Review';
+            button.classList.remove('btn-outline-primary');
+            button.classList.add('btn-primary');
+        } else {
+            reviewContainer.style.display = 'none';
+            button.innerHTML = '<i class="bi bi-eye me-2"></i>Review Answers';
+            button.classList.remove('btn-primary');
+            button.classList.add('btn-outline-primary');
+        }
+    }
+
+    function retakeTest() {
+        // Reset state
+        testState = {
+            questions: [],
+            currentQuestionIndex: 0,
+            answers: [],
+            selectedAnswers: new Map(),
+            startTime: null,
+            questionStartTime: null,
+            isAnswered: false
+        };
+        
+        // Show start screen
+        document.getElementById('results-screen').style.display = 'none';
+        document.getElementById('start-screen').style.display = 'block';
+        
+        // Reset progress bar
+        document.getElementById('test-progress').style.width = '0%';
+        
+        // Stop timer
+        if (window.testTimer) {
+            clearInterval(window.testTimer);
+        }
+    }
+
+    function updateProgress() {
+        const progress = ((testState.currentQuestionIndex + 1) / testState.questions.length) * 100;
+        document.getElementById('test-progress').style.width = progress + '%';
+    }
+
+    function startTimer() {
+        window.testTimer = setInterval(() => {
+            const elapsed = Math.floor((Date.now() - testState.startTime) / 1000);
+            document.getElementById('timer').textContent = formatTime(elapsed);
+        }, 1000);
+    }
+
+    function formatTime(seconds) {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    }
+
+    function getScoreClass(percentage) {
+        if (percentage >= 90) return 'score-excellent';
+        if (percentage >= 70) return 'score-good';
+        if (percentage >= 50) return 'score-fair';
+        return 'score-poor';
+    }
+
+    // Make selectOption globally available
+    window.selectOption = selectOption;
+});
+</script>
+{% endblock %}

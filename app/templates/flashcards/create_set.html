@@ -1,0 +1,356 @@
+{% extends "base.html" %}
+
+{% block title %}Create Set - Quizlet Clone{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="fw-bold mb-4">Create a New Study Set</h1>
+            
+            <form id="flashcard-form" method="POST" onsubmit="return false;">
+                <!-- Set Information -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Set Information</h5>
+                        
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label for="title" class="form-label">Title</label>
+                                    <input type="text" class="form-control" id="title" name="title" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="category" class="form-label">Category</label>
+                                    <select class="form-select" id="category" name="category">
+                                        <option value="">Select category</option>
+                                        <option value="language">Language</option>
+                                        <option value="science">Science</option>
+                                        <option value="math">Mathematics</option>
+                                        <option value="history">History</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="tags" class="form-label">Tags</label>
+                                    <input type="text" class="form-control" id="tags" name="tags" placeholder="Enter tags separated by commas">
+                                    <div class="form-text">e.g., spanish, vocabulary, beginner</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <div class="form-check mt-4">
+                                        <input class="form-check-input" type="checkbox" id="is_public" name="is_public">
+                                        <label class="form-check-label" for="is_public">
+                                            Make this set public
+                                        </label>
+                                        <div class="form-text">Public sets can be found by other users</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Flashcards -->
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Flashcards</h5>
+                        <button type="button" id="add-card-btn" class="btn btn-outline-primary">
+                            <i class="bi bi-plus"></i> Add Card
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div id="cards-container">
+                            <!-- Initial card -->
+                            <div class="term-definition-pair position-relative mb-3" data-card-index="0">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="card-number">Card 1</h6>
+                                    <button type="button" class="btn btn-sm btn-outline-danger remove-card-btn" style="display: none;">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Term</label>
+                                        <textarea class="form-control card-input" name="terms[]" rows="3" placeholder="Enter term" required></textarea>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Definition</label>
+                                        <textarea class="form-control card-input" name="definitions[]" rows="3" placeholder="Enter definition" required></textarea>
+                                    </div>
+                                </div>
+                                <div class="row mt-2">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Image URL (optional)</label>
+                                        <input type="url" class="form-control" name="image_urls[]" placeholder="https://...">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Audio URL (optional)</label>
+                                        <input type="url" class="form-control" name="audio_urls[]" placeholder="https://...">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-muted mt-3">
+                            <small>Add at least 2 cards to create your study set</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Submit Buttons -->
+                <div class="d-flex gap-2">
+                    <button type="submit" id="create-set-btn" class="btn btn-primary">
+                        <span class="btn-text">Create Set</span>
+                        <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                    </button>
+                    <a href="{{ url_for('flashcards.index') }}" class="btn btn-outline-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Custom form submission handler for create set
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('flashcard-form');
+    const createBtn = document.getElementById('create-set-btn');
+    const addCardBtn = document.getElementById('add-card-btn');
+    const cardsContainer = document.getElementById('cards-container');
+    
+    // Handle form submission
+    form.addEventListener('submit', handleFormSubmission);
+    
+    // Handle add card button
+    addCardBtn.addEventListener('click', addNewCard);
+    
+    // Initialize remove card buttons
+    updateRemoveButtons();
+    
+    async function handleFormSubmission(e) {
+        e.preventDefault();
+        
+        // Show loading state
+        const btnText = createBtn.querySelector('.btn-text');
+        const spinner = createBtn.querySelector('.spinner-border');
+        btnText.textContent = 'Creating...';
+        spinner.classList.remove('d-none');
+        createBtn.disabled = true;
+        
+        try {
+            // Collect form data
+            const formData = collectFormData();
+            
+            // Validate data
+            if (!validateFormData(formData)) {
+                return;
+            }
+            
+            // Send to backend
+            const response = await fetch('{{ url_for("flashcards.create_set") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(formData)
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                showNotification('Study set created successfully!', 'success');
+                // Redirect after short delay
+                setTimeout(() => {
+                    window.location.href = result.redirect_url || '{{ url_for("flashcards.index") }}';
+                }, 1500);
+            } else {
+                showNotification(result.message || 'Failed to create study set', 'error');
+            }
+            
+        } catch (error) {
+            console.error('Error creating set:', error);
+            showNotification('An error occurred while creating the set. Please try again.', 'error');
+        } finally {
+            // Reset button state
+            btnText.textContent = 'Create Set';
+            spinner.classList.add('d-none');
+            createBtn.disabled = false;
+        }
+    }
+    
+    function collectFormData() {
+        const title = document.getElementById('title').value.trim();
+        const category = document.getElementById('category').value;
+        const description = document.getElementById('description').value.trim();
+        const tags = document.getElementById('tags').value.trim();
+        const isPublic = document.getElementById('is_public').checked;
+        
+        // Collect cards
+        const cards = [];
+        const cardElements = cardsContainer.querySelectorAll('.term-definition-pair');
+        
+        cardElements.forEach((cardEl, index) => {
+            const term = cardEl.querySelector('textarea[name="terms[]"]').value.trim();
+            const definition = cardEl.querySelector('textarea[name="definitions[]"]').value.trim();
+            const imageUrl = cardEl.querySelector('input[name="image_urls[]"]').value.trim();
+            const audioUrl = cardEl.querySelector('input[name="audio_urls[]"]').value.trim();
+            
+            if (term || definition) {
+                cards.push({
+                    term: term,
+                    definition: definition,
+                    image_url: imageUrl || null,
+                    audio_url: audioUrl || null
+                });
+            }
+        });
+        
+        return {
+            title: title,
+            category: category,
+            description: description,
+            tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag),
+            is_public: isPublic,
+            cards: cards
+        };
+    }
+    
+    function validateFormData(data) {
+        if (!data.title) {
+            showNotification('Please enter a title for your study set', 'error');
+            document.getElementById('title').focus();
+            return false;
+        }
+        
+        if (data.cards.length < 2) {
+            showNotification('Please add at least 2 cards to your study set', 'error');
+            return false;
+        }
+        
+        // Check that all cards have both term and definition
+        for (let i = 0; i < data.cards.length; i++) {
+            const card = data.cards[i];
+            if (!card.term || !card.definition) {
+                showNotification(`Please fill in both term and definition for card ${i + 1}`, 'error');
+                return false;
+            }
+        }
+        
+        return true;
+    }
+    
+    function addNewCard() {
+        const cardCount = cardsContainer.children.length;
+        const cardHtml = `
+            <div class="term-definition-pair position-relative mb-3" data-card-index="${cardCount}">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h6 class="card-number">Card ${cardCount + 1}</h6>
+                    <button type="button" class="btn btn-sm btn-outline-danger remove-card-btn">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <label class="form-label">Term</label>
+                        <textarea class="form-control card-input" name="terms[]" rows="3" placeholder="Enter term" required></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Definition</label>
+                        <textarea class="form-control card-input" name="definitions[]" rows="3" placeholder="Enter definition" required></textarea>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-md-6">
+                        <label class="form-label">Image URL (optional)</label>
+                        <input type="url" class="form-control" name="image_urls[]" placeholder="https://...">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Audio URL (optional)</label>
+                        <input type="url" class="form-control" name="audio_urls[]" placeholder="https://...">
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        cardsContainer.insertAdjacentHTML('beforeend', cardHtml);
+        updateRemoveButtons();
+        updateCardNumbers();
+        
+        // Focus on the new card's term field
+        const newCard = cardsContainer.lastElementChild;
+        const termField = newCard.querySelector('textarea[name="terms[]"]');
+        termField.focus();
+    }
+    
+    function updateRemoveButtons() {
+        const cards = cardsContainer.querySelectorAll('.term-definition-pair');
+        const removeButtons = cardsContainer.querySelectorAll('.remove-card-btn');
+        
+        // Show/hide remove buttons based on card count
+        removeButtons.forEach((btn, index) => {
+            if (cards.length > 1) {
+                btn.style.display = 'block';
+                btn.onclick = () => removeCard(btn.closest('.term-definition-pair'));
+            } else {
+                btn.style.display = 'none';
+            }
+        });
+    }
+    
+    function removeCard(cardElement) {
+        if (cardsContainer.children.length > 1) {
+            cardElement.remove();
+            updateCardNumbers();
+            updateRemoveButtons();
+        }
+    }
+    
+    function updateCardNumbers() {
+        const cards = cardsContainer.querySelectorAll('.term-definition-pair');
+        cards.forEach((card, index) => {
+            const numberElement = card.querySelector('.card-number');
+            numberElement.textContent = `Card ${index + 1}`;
+            card.setAttribute('data-card-index', index);
+        });
+    }
+    
+    function showNotification(message, type = 'info') {
+        const alertClass = type === 'error' ? 'alert-danger' : 
+                          type === 'success' ? 'alert-success' : 'alert-info';
+        
+        const notification = document.createElement('div');
+        notification.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 1050; min-width: 300px;';
+        notification.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 5000);
+    }
+});
+</script>
+<script src="{{ url_for('static', filename='js/flashcard-create-set.js') }}"></script>
+{% endblock %}

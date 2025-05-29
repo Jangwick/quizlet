@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Quizlet Clone{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section bg-primary text-white py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">Learn Smarter, Not Harder</h1>
+                <p class="lead mb-4">Create flashcards, take quizzes, and track your progress with our comprehensive learning platform.</p>
+                {% if not current_user or not current_user.is_authenticated %}
+                <div class="d-grid gap-2 d-md-flex">
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-light btn-lg me-md-2">Get Started</a>
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-outline-light btn-lg">Sign In</a>
+                </div>
+                {% else %}
+                <div class="d-grid gap-2 d-md-flex">
+                    <a href="{{ url_for('flashcards.create_set') }}" class="btn btn-light btn-lg me-md-2">Create Set</a>
+                    <a href="{{ url_for('dashboard.index') }}" class="btn btn-outline-light btn-lg">Dashboard</a>
+                </div>
+                {% endif %}
+            </div>
+            <div class="col-lg-6">
+                <img src="https://picsum.photos/600/400?random=1" alt="Learning illustration" class="img-fluid rounded shadow">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features-section py-5">
+    <div class="container">
+        <div class="row text-center mb-5">
+            <div class="col-12">
+                <h2 class="display-5 fw-bold mb-3">Powerful Learning Features</h2>
+                <p class="lead">Everything you need to master any subject</p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="feature-icon bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                            <i class="bi bi-card-text fs-4"></i>
+                        </div>
+                        <h5 class="card-title">Flashcards</h5>
+                        <p class="card-text">Create and study with interactive flashcards. Add images, audio, and rich text to enhance learning.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="feature-icon bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                            <i class="bi bi-puzzle fs-4"></i>
+                        </div>
+                        <h5 class="card-title">Study Modes</h5>
+                        <p class="card-text">Multiple study modes including Learn, Test, Match, and adaptive learning to suit your style.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="feature-icon bg-info text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                            <i class="bi bi-graph-up fs-4"></i>
+                        </div>
+                        <h5 class="card-title">Progress Tracking</h5>
+                        <p class="card-text">Monitor your learning progress with detailed analytics and performance insights.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section class="stats-section bg-light py-5">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-md-4">
+                <div class="stat-item">
+                    <h3 class="display-4 fw-bold text-primary">{{ total_users }}</h3>
+                    <p class="lead">Active Learners</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-item">
+                    <h3 class="display-4 fw-bold text-success">{{ total_sets }}</h3>
+                    <p class="lead">Study Sets</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-item">
+                    <h3 class="display-4 fw-bold text-info">1M+</h3>
+                    <p class="lead">Cards Studied</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Sets -->
+{% if featured_sets %}
+<section class="featured-sets py-5">
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2 class="fw-bold">Featured Study Sets</h2>
+                <p class="text-muted">Popular sets from our community</p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            {% for set in featured_sets %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100">
+                    <img src="https://picsum.photos/300/200?random={{ loop.index }}" class="card-img-top" alt="Study set thumbnail">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ set.title }}</h5>
+                        <p class="card-text">{{ set.description[:100] if set.description else 'No description available' }}{% if set.description and set.description|length > 100 %}...{% endif %}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">{{ set.flashcards|length if set.flashcards else 0 }} terms</small>
+                            <small class="text-muted">by {{ set.creator.username if set.creator else 'Unknown' }}</small>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-transparent">
+                        <a href="{{ url_for('flashcards.view_set', set_id=set.id) }}" class="btn btn-primary">Study Now</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- CTA Section -->
+<section class="cta-section bg-primary text-white py-5">
+    <div class="container text-center">
+        <h2 class="display-5 fw-bold mb-3">Ready to Start Learning?</h2>
+        <p class="lead mb-4">Join thousands of students improving their grades with our platform</p>
+        {% if not current_user.is_authenticated %}
+        <a href="{{ url_for('auth.register') }}" class="btn btn-light btn-lg">Sign Up Free</a>
+        {% else %}
+        <a href="{{ url_for('flashcards.create_set') }}" class="btn btn-light btn-lg">Create Your First Set</a>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

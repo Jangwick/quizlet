@@ -1,0 +1,614 @@
+{% extends "base.html" %}
+
+{% block title %}Learn: {{ flashcard_set.title }} - Quizlet Clone{% endblock %}
+
+{% block extra_css %}
+<style>
+.learn-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.learn-card {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    border: none;
+    overflow: hidden;
+}
+
+.learn-header {
+    background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%);
+    color: white;
+    padding: 1.5rem;
+    border: none;
+}
+
+.learn-options {
+    display: grid;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.learn-option {
+    padding: 1.5rem;
+    border: 2px solid #e9ecef;
+    border-radius: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: white;
+    text-align: left;
+    position: relative;
+}
+
+.learn-option:hover {
+    border-color: #6f42c1;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(111, 66, 193, 0.1);
+}
+
+.learn-option.selected {
+    border-color: #6f42c1;
+    background: linear-gradient(135deg, #f3e8ff 0%, #faf5ff 100%);
+    color: #6f42c1;
+}
+
+.learn-option.correct {
+    border-color: #28a745;
+    background: linear-gradient(135deg, #d1e7dd 0%, #e8f5e9 100%);
+    color: #155724;
+}
+
+.learn-option.incorrect {
+    border-color: #dc3545;
+    background: linear-gradient(135deg, #f8d7da 0%, #fde2e4 100%);
+    color: #721c24;
+}
+
+.confidence-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+    justify-content: center;
+}
+
+.confidence-btn {
+    flex: 1;
+    max-width: 120px;
+    padding: 0.75rem;
+    border-radius: 25px;
+    border: 2px solid;
+    background: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    font-weight: 600;
+}
+
+.confidence-btn.easy {
+    border-color: #28a745;
+    color: #28a745;
+}
+
+.confidence-btn.easy:hover {
+    background: #28a745;
+    color: white;
+}
+
+.confidence-btn.medium {
+    border-color: #ffc107;
+    color: #856404;
+}
+
+.confidence-btn.medium:hover {
+    background: #ffc107;
+    color: #856404;
+}
+
+.confidence-btn.hard {
+    border-color: #dc3545;
+    color: #dc3545;
+}
+
+.confidence-btn.hard:hover {
+    background: #dc3545;
+    color: white;
+}
+
+.spaced-repetition-info {
+    background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    border-left: 4px solid #6f42c1;
+}
+
+.mastery-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.mastery-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #dee2e6;
+}
+
+.mastery-dot.learned {
+    background: #28a745;
+}
+
+.mastery-dot.learning {
+    background: #ffc107;
+}
+
+.learn-progress {
+    height: 8px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #e9ecef;
+    margin-bottom: 2rem;
+}
+
+.start-screen {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+}
+
+.completion-screen {
+    text-align: center;
+    padding: 3rem;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+}
+
+.study-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin: 2rem 0;
+}
+
+.stat-card {
+    background: #f8f9fa;
+    border-radius: 15px;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #6f42c1;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-top: 0.5rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="text-center mb-4">
+                <h2 class="fw-bold text-primary">{{ flashcard_set.title }}</h2>
+                <p class="text-muted">Adaptive Learning Mode</p>
+            </div>
+            
+            <!-- Progress Bar -->
+            <div class="learn-progress">
+                <div class="progress-bar bg-info" role="progressbar" style="width: 0%" id="learn-progress"></div>
+            </div>
+            
+            <!-- Spaced Repetition Info -->
+            <div class="spaced-repetition-info">
+                <h6 class="fw-bold mb-2">
+                    <i class="bi bi-lightbulb me-2"></i>Adaptive Learning System
+                </h6>
+                <p class="mb-0 small">
+                    This mode uses spaced repetition to help you learn more effectively. 
+                    Cards you find difficult will appear more frequently until you master them.
+                </p>
+            </div>
+            
+            <div class="learn-container">
+                <!-- Start Screen -->
+                <div id="start-screen" class="start-screen">
+                    <i class="bi bi-lightbulb fs-1 text-info mb-3 d-block"></i>
+                    <h3 class="fw-bold mb-3">Adaptive Learning Mode</h3>
+                    <p class="text-muted mb-4 lead">Study smarter with spaced repetition and adaptive questioning</p>
+                    
+                    <div class="row justify-content-center mb-4">
+                        <div class="col-md-8">
+                            <div class="mastery-indicator">
+                                <span class="fw-semibold me-3">Your Progress:</span>
+                                {% for i in range(flashcard_set.flashcards|length) %}
+                                <div class="mastery-dot" data-card="{{ i }}"></div>
+                                {% endfor %}
+                            </div>
+                            <small class="text-muted">
+                                <span class="me-3"><span class="mastery-dot learned d-inline-block me-1"></span>Mastered</span>
+                                <span class="me-3"><span class="mastery-dot learning d-inline-block me-1"></span>Learning</span>
+                                <span><span class="mastery-dot d-inline-block me-1"></span>Not Started</span>
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-info btn-lg rounded-pill px-5 py-3" id="start-learn">
+                        <i class="bi bi-play-fill me-2"></i>Start Learning
+                    </button>
+                </div>
+                
+                <!-- Question Screen -->
+                <div id="question-screen" style="display: none;">
+                    <div class="learn-card">
+                        <div class="learn-header">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">Question <span id="current-question">1</span></h5>
+                                <span class="badge bg-white text-dark fs-6 px-3 py-2 rounded-pill">
+                                    Round <span id="current-round">1</span>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="card-body p-4">
+                            <h4 id="question-text" class="mb-4"></h4>
+                            <div class="learn-options" id="options-container"></div>
+                            
+                            <div class="confidence-buttons" id="confidence-buttons" style="display: none;">
+                                <div class="confidence-btn easy" onclick="setConfidence('easy')">
+                                    <i class="bi bi-check-circle-fill mb-1 d-block"></i>
+                                    Easy
+                                </div>
+                                <div class="confidence-btn medium" onclick="setConfidence('medium')">
+                                    <i class="bi bi-dash-circle-fill mb-1 d-block"></i>
+                                    Medium  
+                                </div>
+                                <div class="confidence-btn hard" onclick="setConfidence('hard')">
+                                    <i class="bi bi-x-circle-fill mb-1 d-block"></i>
+                                    Hard
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+                                <button class="btn btn-outline-secondary rounded-pill px-4" id="skip-question">
+                                    <i class="bi bi-skip-forward me-2"></i>Skip
+                                </button>
+                                <span class="text-muted small" id="learn-hint"></span>
+                                <button class="btn btn-info rounded-pill px-4" id="continue-learn" style="display: none;">
+                                    Continue<i class="bi bi-arrow-right ms-2"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Completion Screen -->
+                <div id="completion-screen" class="completion-screen" style="display: none;">
+                    <i class="bi bi-trophy fs-1 text-warning mb-3 d-block"></i>
+                    <h3 class="fw-bold mb-3">Learning Session Complete!</h3>
+                    <p class="text-muted mb-4">Great job! You've made progress on your flashcard set.</p>
+                    
+                    <div class="study-stats">
+                        <div class="stat-card">
+                            <div class="stat-value" id="mastered-count">0</div>
+                            <div class="stat-label">Cards Mastered</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="learning-count">0</div>
+                            <div class="stat-label">Still Learning</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="session-time">0:00</div>
+                            <div class="stat-label">Study Time</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="accuracy-rate">0%</div>
+                            <div class="stat-label">Accuracy</div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex gap-2 justify-content-center">
+                        <button class="btn btn-info rounded-pill px-4" id="continue-learning">
+                            <i class="bi bi-arrow-repeat me-2"></i>Continue Learning
+                        </button>
+                        <a href="{{ url_for('flashcards.view_set', set_id=flashcard_set.id) }}" class="btn btn-outline-secondary rounded-pill px-4">
+                            <i class="bi bi-house me-2"></i>Back to Set
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Flashcard data
+    const flashcards = [
+        {% for card in flashcard_set.flashcards %}
+        {
+            id: {{ card.id }},
+            term: {{ card.term|tojson|safe }},
+            definition: {{ card.definition|tojson|safe }}
+        }{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ];
+
+    let learnState = {
+        currentCardIndex: 0,
+        currentRound: 1,
+        masteredCards: new Set(),
+        learningCards: new Set(),
+        incorrectAnswers: new Map(), // Track wrong answers for spaced repetition
+        sessionStartTime: null,
+        totalAnswers: 0,
+        correctAnswers: 0,
+        currentQuestion: null,
+        isAnswered: false
+    };
+
+    // Initialize learn mode
+    initializeLearnMode();
+
+    function initializeLearnMode() {
+        document.getElementById('start-learn').addEventListener('click', startLearning);
+        document.getElementById('skip-question').addEventListener('click', skipQuestion);
+        document.getElementById('continue-learn').addEventListener('click', continueToNext);
+        document.getElementById('continue-learning').addEventListener('click', startNewRound);
+    }
+
+    function startLearning() {
+        learnState.sessionStartTime = Date.now();
+        learnState.currentCardIndex = 0;
+        learnState.currentRound = 1;
+        
+        // Initialize all cards as not started
+        updateMasteryIndicators();
+        
+        // Show question screen
+        document.getElementById('start-screen').style.display = 'none';
+        document.getElementById('question-screen').style.display = 'block';
+        
+        // Show first question
+        showLearnQuestion();
+    }
+
+    function showLearnQuestion() {
+        // Get cards that need review (not mastered)
+        const cardsToReview = flashcards.filter((card, index) => !learnState.masteredCards.has(index));
+        
+        if (cardsToReview.length === 0) {
+            showCompletionScreen();
+            return;
+        }
+
+        // Select current card (prioritize cards with incorrect answers)
+        let currentCard;
+        let currentCardIndex;
+        
+        if (learnState.currentCardIndex >= cardsToReview.length) {
+            learnState.currentCardIndex = 0;
+            learnState.currentRound++;
+        }
+
+        currentCard = cardsToReview[learnState.currentCardIndex];
+        currentCardIndex = flashcards.indexOf(currentCard);
+        learnState.currentQuestion = { card: currentCard, originalIndex: currentCardIndex };
+        learnState.isAnswered = false;
+
+        // Update UI
+        document.getElementById('current-question').textContent = learnState.currentCardIndex + 1;
+        document.getElementById('current-round').textContent = learnState.currentRound;
+        document.getElementById('question-text').textContent = currentCard.term;
+        
+        // Generate multiple choice options
+        generateLearnOptions(currentCard);
+        
+        // Update progress
+        updateLearnProgress();
+        
+        // Reset UI state
+        document.getElementById('continue-learn').style.display = 'none';
+        document.getElementById('confidence-buttons').style.display = 'none';
+        document.getElementById('learn-hint').textContent = '';
+    }
+
+    function generateLearnOptions(correctCard) {
+        const optionsContainer = document.getElementById('learn-options');
+        
+        // Get 3 random wrong answers
+        const wrongAnswers = flashcards
+            .filter(card => card.id !== correctCard.id)
+            .sort(() => Math.random() - 0.5)
+            .slice(0, 3)
+            .map(card => card.definition);
+        
+        // Create options array with correct answer
+        const options = [correctCard.definition, ...wrongAnswers];
+        options.sort(() => Math.random() - 0.5);
+        
+        // Generate HTML
+        optionsContainer.innerHTML = options.map(option => `
+            <div class="learn-option" data-answer="${option}" onclick="selectLearnOption(this)">
+                ${option}
+            </div>
+        `).join('');
+    }
+
+    function selectLearnOption(optionElement) {
+        if (learnState.isAnswered) return;
+        
+        const selectedAnswer = optionElement.dataset.answer;
+        const correctAnswer = learnState.currentQuestion.card.definition;
+        const isCorrect = selectedAnswer === correctAnswer;
+        
+        learnState.totalAnswers++;
+        learnState.isAnswered = true;
+        
+        // Remove previous selections
+        document.querySelectorAll('.learn-option').forEach(opt => {
+            opt.classList.remove('selected');
+        });
+        
+        // Mark selected option
+        optionElement.classList.add('selected');
+        
+        if (isCorrect) {
+            learnState.correctAnswers++;
+            optionElement.classList.add('correct');
+            
+            // Mark as learning or mastered
+            const cardIndex = learnState.currentQuestion.originalIndex;
+            learnState.learningCards.add(cardIndex);
+            
+            // Show confidence buttons for correct answers
+            document.getElementById('confidence-buttons').style.display = 'flex';
+            document.getElementById('learn-hint').textContent = 'Great! How confident do you feel about this card?';
+        } else {
+            optionElement.classList.add('incorrect');
+            
+            // Show correct answer
+            document.querySelectorAll('.learn-option').forEach(opt => {
+                if (opt.dataset.answer === correctAnswer) {
+                    opt.classList.add('correct');
+                }
+            });
+            
+            // Track incorrect answer for spaced repetition
+            const cardIndex = learnState.currentQuestion.originalIndex;
+            const incorrectCount = learnState.incorrectAnswers.get(cardIndex) || 0;
+            learnState.incorrectAnswers.set(cardIndex, incorrectCount + 1);
+            
+            document.getElementById('learn-hint').textContent = 'Study this definition and try again later.';
+            
+            // Auto-continue after showing feedback
+            setTimeout(() => {
+                document.getElementById('continue-learn').style.display = 'inline-block';
+            }, 2000);
+        }
+        
+        // Update mastery indicators
+        updateMasteryIndicators();
+    }
+
+    function setConfidence(level) {
+        const cardIndex = learnState.currentQuestion.originalIndex;
+        
+        switch(level) {
+            case 'easy':
+                // Mark as mastered
+                learnState.masteredCards.add(cardIndex);
+                learnState.learningCards.delete(cardIndex);
+                break;
+            case 'medium':
+                // Keep in learning pile, will see again this round
+                learnState.learningCards.add(cardIndex);
+                break;
+            case 'hard':
+                // Remove from learning, will see more frequently
+                learnState.learningCards.delete(cardIndex);
+                const incorrectCount = learnState.incorrectAnswers.get(cardIndex) || 0;
+                learnState.incorrectAnswers.set(cardIndex, incorrectCount + 1);
+                break;
+        }
+        
+        // Update mastery indicators
+        updateMasteryIndicators();
+        
+        // Show continue button
+        document.getElementById('continue-learn').style.display = 'inline-block';
+        document.getElementById('confidence-buttons').style.display = 'none';
+    }
+
+    function skipQuestion() {
+        const cardIndex = learnState.currentQuestion.originalIndex;
+        const incorrectCount = learnState.incorrectAnswers.get(cardIndex) || 0;
+        learnState.incorrectAnswers.set(cardIndex, incorrectCount + 1);
+        
+        continueToNext();
+    }
+
+    function continueToNext() {
+        learnState.currentCardIndex++;
+        showLearnQuestion();
+    }
+
+    function startNewRound() {
+        learnState.currentRound++;
+        learnState.currentCardIndex = 0;
+        
+        // Show question screen
+        document.getElementById('completion-screen').style.display = 'none';
+        document.getElementById('question-screen').style.display = 'block';
+        
+        showLearnQuestion();
+    }
+
+    function updateMasteryIndicators() {
+        const dots = document.querySelectorAll('.mastery-dot[data-card]');
+        dots.forEach((dot, index) => {
+            dot.classList.remove('learned', 'learning');
+            
+            if (learnState.masteredCards.has(index)) {
+                dot.classList.add('learned');
+            } else if (learnState.learningCards.has(index)) {
+                dot.classList.add('learning');
+            }
+        });
+    }
+
+    function updateLearnProgress() {
+        const totalCards = flashcards.length;
+        const masteredCount = learnState.masteredCards.size;
+        const progress = (masteredCount / totalCards) * 100;
+        
+        document.getElementById('learn-progress').style.width = progress + '%';
+    }
+
+    function showCompletionScreen() {
+        const sessionTime = Math.floor((Date.now() - learnState.sessionStartTime) / 1000);
+        const accuracy = learnState.totalAnswers > 0 ? 
+            Math.round((learnState.correctAnswers / learnState.totalAnswers) * 100) : 0;
+        
+        // Hide question screen
+        document.getElementById('question-screen').style.display = 'none';
+        
+        // Show completion screen
+        document.getElementById('completion-screen').style.display = 'block';
+        
+        // Update stats
+        document.getElementById('mastered-count').textContent = learnState.masteredCards.size;
+        document.getElementById('learning-count').textContent = learnState.learningCards.size;
+        document.getElementById('session-time').textContent = formatTime(sessionTime);
+        document.getElementById('accuracy-rate').textContent = accuracy + '%';
+        
+        // Update progress to show completion
+        updateLearnProgress();
+    }
+
+    function formatTime(seconds) {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    }
+
+    // Make functions globally available
+    window.selectLearnOption = selectLearnOption;
+    window.setConfidence = setConfidence;
+});
+</script>
+{% endblock %}

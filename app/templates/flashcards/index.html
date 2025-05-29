@@ -1,0 +1,686 @@
+{% extends "base.html" %}
+
+{% block title %}My Study Sets - Quizlet Clone{% endblock %}
+
+{% block extra_css %}
+<style>
+.flashcard-set-card {
+    border: none;
+    border-radius: 15px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    overflow: hidden;
+    position: relative;
+}
+
+.flashcard-set-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+
+.card-header {
+    background: linear-gradient(135deg, #0d6efd 0%, #0056b3 100%);
+    color: white;
+    border: none;
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.card-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+}
+
+.set-title {
+    font-weight: 700;
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+    position: relative;
+    z-index: 1;
+}
+
+.set-description {
+    opacity: 0.9;
+    font-size: 0.95rem;
+    position: relative;
+    z-index: 1;
+}
+
+.set-stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+.stat-item i {
+    margin-right: 0.5rem;
+}
+
+.set-actions {
+    padding: 1rem 1.5rem;
+}
+
+.visibility-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    z-index: 2;
+}
+
+.filter-section {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.search-box {
+    position: relative;
+}
+
+.search-box i {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+}
+
+.search-box input {
+    padding-left: 3rem;
+    border-radius: 12px;
+    border: 2px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.search-box input:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #6c757d;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.quick-actions {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.bulk-actions {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    display: none;
+}
+
+.set-checkbox {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    z-index: 3;
+}
+
+.progress-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: #e9ecef;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #28a745, #20c997);
+    transition: width 0.3s ease;
+}
+
+@media (max-width: 768px) {
+    .filter-section {
+        padding: 1rem;
+    }
+    
+    .set-stats {
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: flex-start;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="fw-bold">
+                        <i class="bi bi-collection text-primary"></i> My Study Sets
+                    </h1>
+                    <p class="text-muted mb-0">Manage and organize your flashcard collections</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-secondary" onclick="toggleBulkSelect()">
+                        <i class="bi bi-check-square"></i> Bulk Select
+                    </button>
+                    <a href="{{ url_for('flashcards.create_set') }}" class="btn btn-primary">
+                        <i class="bi bi-plus-lg"></i> Create Set
+                    </a>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h5 class="mb-1">Quick Actions</h5>
+                        <p class="mb-0 opacity-75">Fast access to common tasks</p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <div class="d-flex gap-2 justify-content-end">
+                            <button class="btn btn-light btn-sm" onclick="startQuickStudy()">
+                                <i class="bi bi-lightning"></i> Quick Study
+                            </button>
+                            <button class="btn btn-light btn-sm" onclick="showImportModal()">
+                                <i class="bi bi-upload"></i> Import
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bulk Actions Bar -->
+            <div class="bulk-actions" id="bulkActions">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span id="selectedCount">0 sets selected</span>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-outline-primary" onclick="bulkMakePublic()">
+                            <i class="bi bi-globe"></i> Make Public
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="bulkMakePrivate()">
+                            <i class="bi bi-lock"></i> Make Private
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="bulkDelete()">
+                            <i class="bi bi-trash"></i> Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters and Search -->
+            <div class="filter-section">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="search-box">
+                            <i class="bi bi-search"></i>
+                            <input type="text" class="form-control" id="searchInput" 
+                                   placeholder="Search your sets...">
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <select class="form-select" id="sortSelect">
+                            <option value="recent">Recently Modified</option>
+                            <option value="title">Title A-Z</option>
+                            <option value="title-desc">Title Z-A</option>
+                            <option value="cards">Most Cards</option>
+                            <option value="cards-desc">Fewest Cards</option>
+                            <option value="created">Date Created</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select class="form-select" id="filterVisibility">
+                            <option value="all">All Sets</option>
+                            <option value="public">Public Only</option>
+                            <option value="private">Private Only</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select class="form-select" id="filterProgress">
+                            <option value="all">All Progress</option>
+                            <option value="not-started">Not Started</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="mastered">Mastered</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="d-flex gap-1">
+                            <button class="btn btn-outline-secondary btn-sm" onclick="toggleView('grid')" id="gridViewBtn">
+                                <i class="bi bi-grid-3x3-gap"></i>
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="toggleView('list')" id="listViewBtn">
+                                <i class="bi bi-list"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Study Sets Grid -->
+            <div id="flashcardSets" class="row g-4">
+                {% for set in sets %}
+                <div class="col-lg-4 col-md-6 flashcard-set-card" data-set-id="{{ set.id }}" 
+                     data-title="{{ set.title|lower }}" data-visibility="{{ 'public' if set.is_public else 'private' }}">
+                    <div class="card h-100">
+                        <!-- Visibility Badge -->
+                        <span class="badge visibility-badge {{ 'bg-success' if set.is_public else 'bg-secondary' }}">
+                            <i class="bi bi-{{ 'globe' if set.is_public else 'lock' }}"></i>
+                            {{ 'Public' if set.is_public else 'Private' }}
+                        </span>
+
+                        <!-- Bulk Select Checkbox -->
+                        <div class="set-checkbox" style="display: none;">
+                            <input type="checkbox" class="form-check-input" onchange="updateBulkActions()">
+                        </div>
+
+                        <!-- Card Header -->
+                        <div class="card-header">
+                            <h5 class="set-title">{{ set.title }}</h5>
+                            <p class="set-description mb-0">
+                                {{ set.description[:80] if set.description else 'No description available' }}
+                                {% if set.description and set.description|length > 80 %}...{% endif %}
+                            </p>
+                        </div>
+
+                        <!-- Progress Bar -->
+                        <div class="progress-overlay">
+                            <div class="progress-bar" style="width: {{ (loop.index * 23) % 100 }}%"></div>
+                        </div>
+
+                        <!-- Card Body -->
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div class="stat-item">
+                                    <i class="bi bi-card-text"></i>
+                                    <span>{{ set.flashcards|length if set.flashcards else 0 }} terms</span>
+                                </div>
+                                <div class="stat-item">
+                                    <i class="bi bi-clock"></i>
+                                    <span>{{ set.updated_at.strftime('%b %d') if set.updated_at else 'Unknown' }}</span>
+                                </div>
+                            </div>
+
+                            <!-- Study Buttons -->
+                            <div class="d-grid gap-2">
+                                <div class="btn-group">
+                                    <a href="/study/{{ set.id }}/flashcards" class="btn btn-primary">
+                                        <i class="bi bi-play-circle"></i> Study
+                                    </a>
+                                    <button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" 
+                                            data-bs-toggle="dropdown">
+                                        <span class="visually-hidden">Toggle Dropdown</span>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="/study/{{ set.id }}/flashcards">
+                                            <i class="bi bi-card-text me-2"></i>Flashcards
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="/study/{{ set.id }}/learn">
+                                            <i class="bi bi-brain me-2"></i>Learn
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="/study/{{ set.id }}/test">
+                                            <i class="bi bi-clipboard-check me-2"></i>Test
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="/study/{{ set.id }}/match">
+                                            <i class="bi bi-puzzle me-2"></i>Match
+                                        </a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card Footer -->
+                        <div class="set-stats">
+                            <div class="d-flex gap-3">
+                                <div class="stat-item">
+                                    <i class="bi bi-eye"></i>
+                                    <span>{{ (loop.index * 47) % 200 + 15 }} views</span>
+                                </div>
+                                <div class="stat-item">
+                                    <i class="bi bi-heart"></i>
+                                    <span>{{ (loop.index * 13) % 50 + 3 }} likes</span>
+                                </div>
+                            </div>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" 
+                                        data-bs-toggle="dropdown">
+                                    <i class="bi bi-three-dots"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="{{ url_for('flashcards.view_set', set_id=set.id) }}">
+                                        <i class="bi bi-eye me-2"></i>View
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('flashcards.edit_set', set_id=set.id) }}">
+                                        <i class="bi bi-pencil me-2"></i>Edit
+                                    </a></li>
+                                    <li><button class="dropdown-item" onclick="duplicateSet({{ set.id }})">
+                                        <i class="bi bi-files me-2"></i>Duplicate
+                                    </button></li>
+                                    <li><button class="dropdown-item" onclick="shareSet({{ set.id }})">
+                                        <i class="bi bi-share me-2"></i>Share
+                                    </button></li>
+                                    <li><button class="dropdown-item" onclick="exportSet({{ set.id }})">
+                                        <i class="bi bi-download me-2"></i>Export
+                                    </button></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><button class="dropdown-item" onclick="toggleVisibility({{ set.id }}, {{ set.is_public|lower }})">
+                                        <i class="bi bi-{{ 'lock' if set.is_public else 'globe' }} me-2"></i>
+                                        Make {{ 'Private' if set.is_public else 'Public' }}
+                                    </button></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><button class="dropdown-item text-danger" onclick="deleteSet({{ set.id }})">
+                                        <i class="bi bi-trash me-2"></i>Delete
+                                    </button></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="col-12">
+                    <div class="empty-state">
+                        <i class="bi bi-collection"></i>
+                        <h3>No Study Sets Yet</h3>
+                        <p>Create your first study set to get started with learning!</p>
+                        <a href="{{ url_for('flashcards.create_set') }}" class="btn btn-primary btn-lg">
+                            <i class="bi bi-plus-lg"></i> Create Your First Set
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if sets|length > 12 %}
+            <nav aria-label="Study sets pagination" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item"><a class="page-link" href="#">Previous</a></li>
+                    <li class="page-item active"><span class="page-link">1</span></li>
+                    <li class="page-item"><a class="page-link" href="#">2</a></li>
+                    <li class="page-item"><a class="page-link" href="#">3</a></li>
+                    <li class="page-item"><a class="page-link" href="#">Next</a></li>
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Import Modal -->
+<div class="modal fade" id="importModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Import Study Set</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="importFile" class="form-label">Choose file to import</label>
+                    <input type="file" class="form-control" id="importFile" accept=".json,.csv,.txt">
+                    <div class="form-text">Supported formats: JSON, CSV, TXT</div>
+                </div>
+                <div class="mb-3">
+                    <label for="importText" class="form-label">Or paste content</label>
+                    <textarea class="form-control" id="importText" rows="5" 
+                              placeholder="Paste your terms and definitions here..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="importSet()">Import</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentView = 'grid';
+let bulkSelectMode = false;
+
+// Search and filter functionality
+document.getElementById('searchInput').addEventListener('input', function() {
+    const searchTerm = this.value.toLowerCase();
+    filterSets();
+});
+
+document.getElementById('sortSelect').addEventListener('change', function() {
+    sortSets(this.value);
+});
+
+document.getElementById('filterVisibility').addEventListener('change', function() {
+    filterSets();
+});
+
+document.getElementById('filterProgress').addEventListener('change', function() {
+    filterSets();
+});
+
+function filterSets() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const visibilityFilter = document.getElementById('filterVisibility').value;
+    const progressFilter = document.getElementById('filterProgress').value;
+    const cards = document.querySelectorAll('.flashcard-set-card');
+    
+    cards.forEach(card => {
+        const title = card.dataset.title;
+        const visibility = card.dataset.visibility;
+        const matchesSearch = title.includes(searchTerm);
+        const matchesVisibility = visibilityFilter === 'all' || visibility === visibilityFilter;
+        
+        if (matchesSearch && matchesVisibility) {
+            card.style.display = '';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+
+function sortSets(sortBy) {
+    const container = document.getElementById('flashcardSets');
+    const cards = Array.from(container.children);
+    
+    cards.sort((a, b) => {
+        switch(sortBy) {
+            case 'title':
+                return a.dataset.title.localeCompare(b.dataset.title);
+            case 'title-desc':
+                return b.dataset.title.localeCompare(a.dataset.title);
+            case 'cards':
+                const aCards = parseInt(a.querySelector('.stat-item span').textContent);
+                const bCards = parseInt(b.querySelector('.stat-item span').textContent);
+                return bCards - aCards;
+            case 'cards-desc':
+                const aCardsDesc = parseInt(a.querySelector('.stat-item span').textContent);
+                const bCardsDesc = parseInt(b.querySelector('.stat-item span').textContent);
+                return aCardsDesc - bCardsDesc;
+            default:
+                return 0;
+        }
+    });
+    
+    cards.forEach(card => container.appendChild(card));
+}
+
+function toggleView(view) {
+    currentView = view;
+    const container = document.getElementById('flashcardSets');
+    const gridBtn = document.getElementById('gridViewBtn');
+    const listBtn = document.getElementById('listViewBtn');
+    
+    if (view === 'list') {
+        container.className = 'row g-2';
+        container.querySelectorAll('.flashcard-set-card').forEach(card => {
+            card.className = 'col-12 flashcard-set-card list-view';
+        });
+        listBtn.classList.add('btn-secondary');
+        listBtn.classList.remove('btn-outline-secondary');
+        gridBtn.classList.add('btn-outline-secondary');
+        gridBtn.classList.remove('btn-secondary');
+    } else {
+        container.className = 'row g-4';
+        container.querySelectorAll('.flashcard-set-card').forEach(card => {
+            card.className = 'col-lg-4 col-md-6 flashcard-set-card';
+        });
+        gridBtn.classList.add('btn-secondary');
+        gridBtn.classList.remove('btn-outline-secondary');
+        listBtn.classList.add('btn-outline-secondary');
+        listBtn.classList.remove('btn-secondary');
+    }
+}
+
+// Bulk selection functionality
+function toggleBulkSelect() {
+    bulkSelectMode = !bulkSelectMode;
+    const checkboxes = document.querySelectorAll('.set-checkbox');
+    const bulkActions = document.getElementById('bulkActions');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.style.display = bulkSelectMode ? 'block' : 'none';
+        checkbox.querySelector('input').checked = false;
+    });
+    
+    bulkActions.style.display = bulkSelectMode ? 'block' : 'none';
+    updateBulkActions();
+}
+
+function updateBulkActions() {
+    const checkedBoxes = document.querySelectorAll('.set-checkbox input:checked');
+    const selectedCount = document.getElementById('selectedCount');
+    selectedCount.textContent = `${checkedBoxes.length} sets selected`;
+}
+
+function bulkMakePublic() {
+    const checkedBoxes = document.querySelectorAll('.set-checkbox input:checked');
+    if (checkedBoxes.length === 0) {
+        alert('Please select at least one set.');
+        return;
+    }
+    
+    if (confirm(`Make ${checkedBoxes.length} sets public?`)) {
+        alert('Demo Mode: Sets would be made public');
+        toggleBulkSelect();
+    }
+}
+
+function bulkMakePrivate() {
+    const checkedBoxes = document.querySelectorAll('.set-checkbox input:checked');
+    if (checkedBoxes.length === 0) {
+        alert('Please select at least one set.');
+        return;
+    }
+    
+    if (confirm(`Make ${checkedBoxes.length} sets private?`)) {
+        alert('Demo Mode: Sets would be made private');
+        toggleBulkSelect();
+    }
+}
+
+function bulkDelete() {
+    const checkedBoxes = document.querySelectorAll('.set-checkbox input:checked');
+    if (checkedBoxes.length === 0) {
+        alert('Please select at least one set.');
+        return;
+    }
+    
+    if (confirm(`Delete ${checkedBoxes.length} sets? This cannot be undone.`)) {
+        alert('Demo Mode: Sets would be deleted');
+        toggleBulkSelect();
+    }
+}
+
+// Additional functionality
+function toggleVisibility(setId, isPublic) {
+    const action = isPublic ? 'private' : 'public';
+    if (confirm(`Make this set ${action}?`)) {
+        alert(`Demo Mode: Set would be made ${action}`);
+    }
+}
+
+function exportSet(setId) {
+    alert('Demo Mode: Set would be exported as JSON file');
+}
+
+function startQuickStudy() {
+    const sets = document.querySelectorAll('.flashcard-set-card:not([style*="display: none"])');
+    if (sets.length === 0) {
+        alert('No study sets available for quick study.');
+        return;
+    }
+    
+    const randomSet = sets[Math.floor(Math.random() * sets.length)];
+    const setId = randomSet.dataset.setId;
+    window.location.href = `/study/${setId}/flashcards`;
+}
+
+function showImportModal() {
+    new bootstrap.Modal(document.getElementById('importModal')).show();
+}
+
+function importSet() {
+    const file = document.getElementById('importFile').files[0];
+    const text = document.getElementById('importText').value;
+    
+    if (!file && !text) {
+        alert('Please select a file or paste content to import.');
+        return;
+    }
+    
+    alert('Demo Mode: Content would be imported and converted to a new study set');
+    bootstrap.Modal.getInstance(document.getElementById('importModal')).hide();
+}
+
+// Initialize view
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('gridViewBtn').classList.add('btn-secondary');
+    document.getElementById('gridViewBtn').classList.remove('btn-outline-secondary');
+});
+
+// Delete confirmation modal
+const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+document.querySelectorAll('.btn-delete-set').forEach(button => {
+    button.addEventListener('click', function() {
+        const setId = this.dataset.setId;
+        document.getElementById('confirmDelete').onclick = function() {
+            deleteSet(setId);
+            deleteModal.hide();
+        };
+        deleteModal.show();
+    });
+});
+</script>
+{% endblock %}

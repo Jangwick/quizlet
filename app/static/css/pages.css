@@ -1,0 +1,227 @@
+/* Page-specific styles */
+
+/* Home page */
+.hero-section {
+    background: linear-gradient(135deg, var(--primary-color), var(--info-color));
+    min-height: 70vh;
+    display: flex;
+    align-items: center;
+}
+
+.features-section .feature-icon {
+    width: 60px;
+    height: 60px;
+    font-size: 1.5rem;
+}
+
+.stats-section {
+    background: var(--light-color);
+}
+
+.stat-item h3 {
+    color: var(--primary-color);
+}
+
+/* Dashboard page */
+.dashboard-header {
+    background: linear-gradient(135deg, var(--primary-color), var(--info-color));
+    color: white;
+    padding: 3rem 0;
+    margin-bottom: 2rem;
+}
+
+.dashboard-card {
+    border: none;
+    box-shadow: var(--box-shadow);
+    transition: var(--transition);
+}
+
+.dashboard-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--box-shadow-lg);
+}
+
+/* Study modes page */
+.study-mode-card {
+    background: white;
+    border: 2px solid #dee2e6;
+    border-radius: var(--border-radius);
+    padding: 2rem;
+    text-align: center;
+    text-decoration: none;
+    color: inherit;
+    transition: var(--transition);
+    display: block;
+    height: 100%;
+}
+
+.study-mode-card:hover {
+    border-color: var(--primary-color);
+    background: rgba(13, 110, 253, 0.05);
+    color: inherit;
+    text-decoration: none;
+}
+
+.study-mode-icon {
+    font-size: 3rem;
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+}
+
+/* Flashcard creation/editing */
+.flashcard-editor {
+    background: var(--light-color);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.term-definition-pair {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.delete-card-btn {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: var(--danger-color);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+/* Authentication pages */
+.auth-container {
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.auth-card {
+    max-width: 400px;
+    width: 100%;
+    box-shadow: var(--box-shadow-lg);
+    border: none;
+    border-radius: var(--border-radius);
+}
+
+.auth-header {
+    background: var(--primary-color);
+    color: white;
+    text-align: center;
+    padding: 2rem;
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+}
+
+/* Search results */
+.search-results {
+    margin-top: 2rem;
+}
+
+.search-result-card {
+    border: none;
+    box-shadow: var(--box-shadow);
+    margin-bottom: 1rem;
+    transition: var(--transition);
+}
+
+.search-result-card:hover {
+    box-shadow: var(--box-shadow-lg);
+}
+
+/* Contact page */
+.contact-info .d-flex {
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    background: var(--light-color);
+    margin-bottom: 1rem;
+}
+
+.contact-form {
+    background: white;
+    padding: 2rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+}
+
+/* About page */
+.feature-box {
+    text-align: center;
+    height: 100%;
+    transition: var(--transition);
+}
+
+.feature-box:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--box-shadow-lg);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .hero-section {
+        min-height: 60vh;
+        text-align: center;
+    }
+    
+    .hero-section .col-lg-6:first-child {
+        margin-bottom: 2rem;
+    }
+    
+    .study-controls {
+        position: static;
+        transform: none;
+        margin-top: 2rem;
+        border-radius: var(--border-radius);
+    }
+    
+    .flashcard {
+        height: 250px;
+    }
+    
+    .match-grid {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    }
+    
+    .dashboard-header {
+        padding: 2rem 0;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    .flashcard-front,
+    .flashcard-back {
+        padding: 1rem;
+    }
+    
+    .flashcard-content {
+        font-size: 1rem;
+    }
+    
+    .match-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .study-mode-icon {
+        font-size: 2rem;
+    }
+}

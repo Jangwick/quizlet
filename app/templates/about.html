@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}About - Quizlet Clone{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <h1 class="display-4 fw-bold text-center mb-5">About Our Platform</h1>
+            
+            <div class="row align-items-center mb-5">
+                <div class="col-md-6">
+                    <img src="https://picsum.photos/500/300?random=10" alt="About us" class="img-fluid rounded shadow">
+                </div>
+                <div class="col-md-6">
+                    <h2 class="fw-bold mb-3">Our Mission</h2>
+                    <p class="lead">We believe that learning should be engaging, effective, and accessible to everyone. Our platform combines proven study techniques with modern technology to help students achieve their academic goals.</p>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-12">
+                    <h2 class="fw-bold mb-4">What We Offer</h2>
+                    
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="feature-box p-4 border rounded">
+                                <i class="bi bi-card-text fs-1 text-primary mb-3"></i>
+                                <h4>Interactive Flashcards</h4>
+                                <p>Create custom flashcards with text, images, and audio to enhance your learning experience.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="feature-box p-4 border rounded">
+                                <i class="bi bi-puzzle fs-1 text-success mb-3"></i>
+                                <h4>Multiple Study Modes</h4>
+                                <p>Choose from various study modes including Learn, Test, Match, and more to suit your learning style.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="feature-box p-4 border rounded">
+                                <i class="bi bi-graph-up fs-1 text-info mb-3"></i>
+                                <h4>Progress Tracking</h4>
+                                <p>Monitor your learning progress with detailed analytics and performance insights.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="feature-box p-4 border rounded">
+                                <i class="bi bi-people fs-1 text-warning mb-3"></i>
+                                <h4>Collaborative Learning</h4>
+                                <p>Share study sets with classmates and collaborate on learning materials.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mt-5">
+                <div class="col-12">
+                    <h2 class="fw-bold mb-4">Why Choose Us?</h2>
+                    <div class="bg-light p-4 rounded">
+                        <ul class="list-unstyled">
+                            <li class="mb-3"><i class="bi bi-check-circle-fill text-success me-2"></i> <strong>Proven Techniques:</strong> Based on cognitive science and spaced repetition</li>
+                            <li class="mb-3"><i class="bi bi-check-circle-fill text-success me-2"></i> <strong>User-Friendly:</strong> Intuitive interface designed for learners of all ages</li>
+                            <li class="mb-3"><i class="bi bi-check-circle-fill text-success me-2"></i> <strong>Cross-Platform:</strong> Access your study materials anywhere, anytime</li>
+                            <li class="mb-3"><i class="bi bi-check-circle-fill text-success me-2"></i> <strong>Community Driven:</strong> Learn from a community of educators and students</li>
+                            <li><i class="bi bi-check-circle-fill text-success me-2"></i> <strong>Free to Use:</strong> Core features available to all users at no cost</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

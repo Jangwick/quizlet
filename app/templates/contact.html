@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}Contact - Quizlet Clone{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <h1 class="display-4 fw-bold text-center mb-5">Contact Us</h1>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <h3 class="fw-bold mb-4">Get in Touch</h3>
+                    <p class="lead mb-4">Have questions, feedback, or need support? We'd love to hear from you!</p>
+                    
+                    <div class="contact-info">
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="bi bi-envelope-fill text-primary fs-4 me-3"></i>
+                            <div>
+                                <strong>Email</strong><br>
+                                <a href="mailto:support@quizletclone.com">support@quizletclone.com</a>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="bi bi-telephone-fill text-primary fs-4 me-3"></i>
+                            <div>
+                                <strong>Phone</strong><br>
+                                <a href="tel:+1234567890">+1 (234) 567-890</a>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="bi bi-geo-alt-fill text-primary fs-4 me-3"></i>
+                            <div>
+                                <strong>Address</strong><br>
+                                123 Learning Street<br>
+                                Education City, EC 12345
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-clock-fill text-primary fs-4 me-3"></i>
+                            <div>
+                                <strong>Support Hours</strong><br>
+                                Monday - Friday: 9 AM - 6 PM EST<br>
+                                Saturday: 10 AM - 4 PM EST
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <form class="contact-form">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Your Name</label>
+                            <input type="text" class="form-control" id="name" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="email" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="subject" class="form-label">Subject</label>
+                            <select class="form-select" id="subject" required>
+                                <option value="">Select a topic</option>
+                                <option value="support">Technical Support</option>
+                                <option value="feedback">Feedback</option>
+                                <option value="bug">Bug Report</option>
+                                <option value="feature">Feature Request</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="message" class="form-label">Message</label>
+                            <textarea class="form-control" id="message" rows="5" required></textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">Send Message</button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="row mt-5">
+                <div class="col-12">
+                    <h3 class="fw-bold mb-4">Frequently Asked Questions</h3>
+                    
+                    <div class="accordion" id="faqAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="faq1">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse1">
+                                    How do I create my first study set?
+                                </button>
+                            </h2>
+                            <div id="collapse1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    After signing up and logging in, click on "Create Set" in the navigation menu. Add your terms and definitions, then save your set to start studying.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="faq2">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse2">
+                                    Can I study offline?
+                                </button>
+                            </h2>
+                            <div id="collapse2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Yes! You can download your study sets for offline access. This feature is available in your dashboard under each study set.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="faq3">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse3">
+                                    How can I share my study sets?
+                                </button>
+                            </h2>
+                            <div id="collapse3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    You can make your study sets public or share them via a direct link. Go to your study set settings and choose your sharing preferences.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
